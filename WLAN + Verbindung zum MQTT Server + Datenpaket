@@ -1,0 +1,112 @@
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include "DHT.h"
+
+#define DHTPIN 4    // Anschluss des DHT-Sensors an Pin 4
+#define DHTTYPE DHT22   // Typ des DHT-Sensors
+const int sensorPin = 2; // Anschluss des Sensors an Pin 2 des ESP32
+
+const char* ssid = "DEIN_SSID";
+const char* password = "DEIN_PASSWORT";
+
+const char* mqtt_server = "DEIN_MQTT_SERVER";
+const int mqtt_port = 1883;
+const char* mqtt_user = "DEIN_MQTT_USER";
+const char* mqtt_password = "DEIN_MQTT_PASSWORT";
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+DHT dht(DHTPIN, DHTTYPE);
+bool someoneDetected = false;
+
+void setup_wifi() {
+  delay(10);
+  Serial.println();
+  Serial.print("Verbinde mit ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WLAN verbunden!");
+  Serial.print("IP-Adresse: ");
+  Serial.println(WiFi.localIP());
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Verbindung zum MQTT-Server ");
+    Serial.print(mqtt_server);
+    Serial.println(" herstellen...");
+    if (client.connect("ESP32Client", mqtt_user, mqtt_password)) {
+      Serial.println("verbunden!");
+    } else {
+      Serial.print("Verbindungsfehler, rc=");
+      Serial.print(client.state());
+      Serial.println(" erneut in 5 Sekunden...");
+      delay(5000);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(sensorPin, INPUT);
+  dht.begin();
+  setup_wifi();
+  client.setServer(mqtt_server, mqtt_port);
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+  delay(2000);
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
+
+  if (isnan(humidity) || isnan(temperature)) {
+    Serial.println("Fehler beim Lesen des DHT-Sensors!");
+    return;
+  }
+
+  if (digitalRead(sensorPin) == HIGH) {
+    delay(10000);
+    if (digitalRead(sensorPin) == HIGH) {
+      someoneDetected = true;
+    } else {
+      someoneDetected = false;
+    }
+  } else {
+    someoneDetected = false;
+  }
+
+  String payload = "{";
+  payload += "\"schule\":\"HWS\",";
+  payload += "\"bau\":\"C\",";
+  payload += "\"stock\":\"1.OG\",";
+  payload += "\"raum\":\"107\",";
+  payload += "\"temperatur\":\"";
+  payload += temperature;
+  payload += "\",";
+  payload += "\"luftfeuchtigkeit\":\"";
+  payload += humidity;
+  payload += "\",";
+  payload += "\"anwesenheit\":\"";
+  payload += (someoneDetected ? "1" : "0");
+  payload += "\"}";
+
+  Serial.print("Sende Nachricht: ");
+  Serial.println(payload);
+
+  client.publish("sensor/data", (char*) payload.c_str());
+
+  delay(5000);
+}
