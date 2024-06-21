@@ -1,0 +1,67 @@
+#include <WiFi.h>
+#include <DHT.h>
+#include <ArduinoJson.h>
+
+#define DHTPIN 4    // Anschluss des DHT-Sensors an Pin 4
+#define DHTTYPE DHT22   // Typ des DHT-Sensors
+const int sensorPin = 2; // Anschluss des Sensors an Pin 2 des ESP32
+bool someoneDetected = false;
+DHT dht(DHTPIN, DHTTYPE);
+StaticJsonDocument<200> jsonData; // JSON-Dokument erstellen
+
+void setup() {
+  pinMode(sensorPin, INPUT);
+  Serial.begin(9600);
+  dht.begin();
+ 
+  
+}
+ int timeBewegung = 0;
+int timeSendung = 0;
+
+  bool Bewegung = false;
+
+void loop() {
+  delay(1000);  
+  float humidity = dht.readHumidity();
+  float temperature = dht.readTemperature();
+  if (isnan(humidity) || isnan(temperature)) {
+    Serial.println("Fehler beim Lesen des DHT-Sensors!");
+    return;
+  }
+
+  if (digitalRead(sensorPin) == HIGH) {
+    if (timeBewegung == 10 && Bewegung == true) {
+      timeBewegung = 0; 
+      Bewegung = true;
+    } else {
+       timeBewegung = 0; 
+       Bewegung = true;
+    }
+  } else {
+    Bewegung = false;
+    timeBewegung = 0;
+  }
+  
+  if (timeSendung == 60) {
+    // Umwandlung in ein JSON-String
+    Serial.println(jason(humidity, temperature, Bewegung));
+    timeSendung = 0; // Zurücksetzen der Zeitvariable
+  } else {
+    timeSendung++;
+  }
+
+}
+
+String jason(float humidity, float temperature, bool Bewegung) {
+  jsonData["schule"] = "HWS";
+  jsonData["bau"] = "C";
+  jsonData["stock"] = "1.OG";
+  jsonData["raum"] = "107";
+  jsonData["temperatur"] = temperature;
+  jsonData["luftfeuchtigkeit"] = humidity;
+  jsonData["anwesenheit"] = Bewegung; // Verfügbarkeit von Personen
+  String jsonString;
+  serializeJson(jsonData, jsonString);
+  return jsonString;
+}
