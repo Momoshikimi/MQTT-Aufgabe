@@ -1,14 +1,24 @@
-#include "WiFi.h"
-#include "PubSubClient.h"
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <ArduinoJson.h>
 
+// WLAN-Zugangsdaten
 const char* ssid = "Wokwi-GUEST";
 const char* password = "";
 
-const char *BROKER_URL = "broker.hivemq.com";
+// MQTT-Broker-Daten
+const char* BROKER_URL = "broker.hivemq.com";
 const uint16_t BROKER_PORT = 1883;
+
+// MQTT-Thema
+const char* TOPIC = "MQTT-Schnittger";
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
+
+// Timer-Variablen
+unsigned long lastMsg = 0;
+#define MSG_INTERVAL 60000  // Nachricht alle 60000 Millisekunden (1 Minute) senden
 
 void setup() {
   Serial.begin(115200);
@@ -29,9 +39,16 @@ void loop() {
     Connect2Mqtt();
   }
   mqttClient.loop();
+
+  // Daten alle Minute senden
+  unsigned long now = millis();
+  if (now - lastMsg > MSG_INTERVAL) {
+    lastMsg = now;
+    sendSensorData();
+  }
 }
 
-void mqttCallback (char* topic, byte* payload, unsigned int length) {
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Callback – Nachricht: ");
   for (int i = 0; i < length; i++) {
     Serial.print((char)payload[i]);
@@ -46,12 +63,27 @@ void setupMqtt() {
 
 void Connect2Mqtt() {
   while (!mqttClient.connected()) {
-    char clientId[100] = "\0";
+    char clientId[50];
+    snprintf(clientId, 50, "ESP32Client-%d", random(0xffff));
     if (mqttClient.connect(clientId)) {
-      mqttClient.subscribe("<your topics>");
+      mqttClient.subscribe(TOPIC);
       Serial.println("Verbindung zum MQTT-Server aufgebaut");
     } else {
       delay(5000);
     }
+  }
+}
+
+void sendSensorData() {
+  // Serialisiere JSON in einen String
+  char jsonBuffer[512];
+  serializeJson(doc, jsonBuffer);
+
+  // Veröffentliche die JSON-Daten
+  if (mqttClient.publish(TOPIC, jsonBuffer)) {
+    Serial.println("Nachricht erfolgreich veröffentlicht:");
+    Serial.println(jsonBuffer);
+  } else {
+    Serial.println("Fehler beim Veröffentlichen der Nachricht");
   }
 }
