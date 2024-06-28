@@ -35,7 +35,7 @@ void loop() {
       timeBewegung = 0; 
       Bewegung = true;
     } else {
-       timeBewegung = 0; 
+       timeBewegung++; 
        Bewegung = true;
     }
   } else {
