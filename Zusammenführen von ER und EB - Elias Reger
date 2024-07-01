@@ -36,7 +36,7 @@ void setup_wifi() {
 
   Serial.println("");
   Serial.println("WiFi verbunden.");
-  Serial.println("IP Adresse: ");
+  Serial.print("IP Adresse: ");
   Serial.println(WiFi.localIP());
 }
 
@@ -59,29 +59,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.println(error.f_str());
     return;
   }
-
-  const char* schule = doc["schule"];
-  const char* bau = doc["bau"];
-  const char* stock = doc["stock"];
-  const char* raum = doc["raum"];
-  float temperatur = doc["temperatur"];
-  float luftfeuchtigkeit = doc["luftfeuchtigkeit"];
-  bool anwesenheit = doc["anwesenheit"];
-
-  Serial.print("Schule: ");
-  Serial.println(schule);
-  Serial.print("Bau: ");
-  Serial.println(bau);
-  Serial.print("Stock: ");
-  Serial.println(stock);
-  Serial.print("Raum: ");
-  Serial.println(raum);
-  Serial.print("Temperatur: ");
-  Serial.println(temperatur);
-  Serial.print("Luftfeuchtigkeit: ");
-  Serial.println(luftfeuchtigkeit);
-  Serial.print("Anwesenheit: ");
-  Serial.println(anwesenheit ? "Ja" : "Nein");
 }
 
 void reconnect() {
@@ -153,9 +130,6 @@ void loop() {
   if (timeSendung == 60) { // Zeitintervall für das Senden der Daten
     // Umwandlung in ein JSON-String
     String jsonString = createJson(humidity, temperature, Bewegung);
-    Serial.println("Senden der Daten:");
-    Serial.println(jsonString);
-
     // Veröffentlichen der Daten auf dem MQTT-Server
     if (client.publish(topic, jsonString.c_str())) {
       Serial.println("Daten erfolgreich gesendet.");
