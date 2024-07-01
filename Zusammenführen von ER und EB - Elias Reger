@@ -103,13 +103,14 @@ void setup() {
   pinMode(sensorPin, INPUT);
   Serial.begin(9600);
   dht.begin();
+  delay(2000); // Wartezeit nach DHT-Sensor-Initialisierung für Stabilität
   Serial.println("Setup abgeschlossen. Sensoren initialisiert.");
   setup_wifi();
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
 }
 
-int timeBewegung = 0;
+int timeBewegung = 11;
 int timeSendung = 0;
 bool Bewegung = false;
 
@@ -149,7 +150,7 @@ void loop() {
     Serial.println("Keine Bewegung.");
   }
   
-  if (timeSendung == 60) {
+  if (timeSendung == 60) { // Zeitintervall für das Senden der Daten
     // Umwandlung in ein JSON-String
     String jsonString = createJson(humidity, temperature, Bewegung);
     Serial.println("Senden der Daten:");
