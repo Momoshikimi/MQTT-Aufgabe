@@ -168,6 +168,7 @@ void loop() {
 
 // Funktion zum Erstellen eines JSON-Strings aus den Sensorwerten
 String createJson(float humidity, float temperature, bool Bewegung) {
+
   // JSON-Daten füllen
   jsonData["schule"] = "HWS";
   jsonData["bau"] = "C";
