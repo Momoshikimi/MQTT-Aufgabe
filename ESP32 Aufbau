@@ -6,7 +6,21 @@
     { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
     { "type": "wokwi-pir-motion-sensor", "id": "pir1", "top": 4, "left": -208.98, "attrs": {} },
     { "type": "wokwi-dht22", "id": "dht1", "top": -134.1, "left": 129, "attrs": {} },
-    { "type": "wokwi-ili9341", "id": "lcd2", "top": -373.6, "left": -67.5, "attrs": {} }
+    { "type": "wokwi-ili9341", "id": "lcd2", "top": -373.6, "left": -67.5, "attrs": {} },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": -13.2,
+      "left": 186.2,
+      "attrs": { "color": "red" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led2",
+      "top": 111.6,
+      "left": 234.2,
+      "attrs": { "color": "red" }
+    }
   ],
   "connections": [
     [ "esp:TX", "$serialMonitor:RX", "", [] ],
@@ -24,7 +38,11 @@
     [ "lcd2:D/C", "esp:15", "green", [ "v0" ] ],
     [ "lcd2:MOSI", "esp:35", "green", [ "v0" ] ],
     [ "lcd2:SCK", "esp:33", "green", [ "v0" ] ],
-    [ "lcd2:MISO", "esp:17", "green", [ "v0" ] ]
+    [ "lcd2:MISO", "esp:17", "green", [ "v0" ] ],
+    [ "led1:A", "esp:16", "green", [ "v0" ] ],
+    [ "led1:C", "esp:GND.3", "green", [ "v0" ] ],
+    [ "esp:GND.3", "led2:C", "black", [ "h0" ] ],
+    [ "led2:A", "esp:0", "green", [ "v0" ] ]
   ],
   "dependencies": {}
 }
