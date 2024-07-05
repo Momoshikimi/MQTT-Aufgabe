@@ -3,11 +3,11 @@
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
 
-// WiFi-Konfigurationsdaten
+                                             // WiFi-Konfigurationsdaten
 const char* ssid = "Wokwi-GUEST";            // Dein WLAN-SSID
 const char* password = "";                   // Dein WLAN-Passwort
 
-// MQTT-Konfigurationsdaten
+                                             // MQTT-Konfigurationsdaten
 const char* mqtt_server = "broker.emqx.io";  // Adresse des MQTT-Servers
 const int mqtt_port = 1883;                  // Port des MQTT-Servers (standardmäßig 1883)
 const char* topic = "sensor/daten";          // Das MQTT-Thema, auf dem die Daten veröffentlicht und abonniert werden
@@ -21,7 +21,7 @@ StaticJsonDocument<200> jsonData;           // JSON-Dokument erstellen
 WiFiClient espClient;
 PubSubClient client(espClient);             // MQTT-Client-Objekt
 
-// WiFi-Verbindung initialisieren
+                                            // WiFi-Verbindung initialisieren
 void setup_wifi() {
   delay(10);
   Serial.println();
@@ -41,13 +41,13 @@ void setup_wifi() {
   Serial.println(WiFi.localIP());
 }
 
-// Callback-Funktion für MQTT-Nachrichten
+                                              // Callback-Funktion für MQTT-Nachrichten
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Nachricht angekommen [");
   Serial.print(topic);
   Serial.print("]: ");
   
-  // Payload in einen String umwandeln
+                                              // Payload in einen String umwandeln
   char message[length + 1];
   for (unsigned int i = 0; i < length; i++) {
     message[i] = (char)payload[i];
@@ -55,7 +55,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   message[length] = '\0';
   Serial.println(message);
 
-  // JSON-Daten deserialisieren und ausgeben
+                                              // JSON-Daten deserialisieren und ausgeben
   StaticJsonDocument<200> doc;
   DeserializationError error = deserializeJson(doc, message);
   if (error) {
@@ -65,14 +65,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
-// Verbindung zum MQTT-Server herstellen
+                                              // Verbindung zum MQTT-Server herstellen
 void reconnect() {
   while (!client.connected()) {
     Serial.print("Verbinden mit MQTT-Server ...");
     if (client.connect("ESP32Client")) {
       Serial.println("verbunden");
 
-      // Auf das MQTT-Thema abonnieren
+                                              // Auf das MQTT-Thema abonnieren
       client.subscribe(topic);
     } else {
       Serial.print("Fehler, rc=");
@@ -83,46 +83,46 @@ void reconnect() {
   }
 }
 
-// Setup-Funktion für Initialisierung
+                                              // Setup-Funktion für Initialisierung
 void setup() {
-  pinMode(sensorPin, INPUT); // Sensor-Pin als Eingang setzen
-  Serial.begin(9600); // Serielle Kommunikation mit Baudrate 9600 starten
-  dht.begin(); // DHT-Sensor initialisieren
-  delay(2000); // Wartezeit nach DHT-Sensor-Initialisierung für Stabilität
+  pinMode(sensorPin, INPUT);                  // Sensor-Pin als Eingang setzen
+  Serial.begin(9600);                         // Serielle Kommunikation mit Baudrate 9600 starten
+  dht.begin();                                // DHT-Sensor initialisieren
+  delay(2000);                                // Wartezeit nach DHT-Sensor-Initialisierung für Stabilität
   Serial.println("Setup abgeschlossen. Sensoren initialisiert.");
   
-  setup_wifi(); // WiFi initialisieren
-  client.setServer(mqtt_server, mqtt_port); // MQTT-Server konfigurieren
-  client.setCallback(callback); // Callback-Funktion für MQTT-Nachrichten setzen
+  setup_wifi();                               // WiFi initialisieren
+  client.setServer(mqtt_server, mqtt_port);   // MQTT-Server konfigurieren
+  client.setCallback(callback);               // Callback-Funktion für MQTT-Nachrichten setzen
 }
 
-// Variablen für Zeitsteuerung und Bewegungserkennung
+                                              // Variablen für Zeitsteuerung und Bewegungserkennung
 int timeBewegung = 11;
 int timeSendung = 0;
 bool Bewegung = false;
 
-// Loop-Funktion für die Hauptausführung
+                                              //  Loop-Funktion für die Hauptausführung
 void loop() {
   if (!client.connected()) {
-    reconnect(); // MQTT-Verbindung wiederherstellen
+    reconnect();                              // MQTT-Verbindung wiederherstellen
   }
-  client.loop(); // MQTT-Client-Schleife ausführen
+  client.loop();                              // MQTT-Client-Schleife ausführen
 
-  delay(1000); // Kurze Pause zwischen den Schleifen
+  delay(1000);                                // Kurze Pause zwischen den Schleifen
 
-  // Luftfeuchtigkeit und Temperatur vom DHT-Sensor lesen
+                                              // Luftfeuchtigkeit und Temperatur vom DHT-Sensor lesen
 
   float humidity = dht.readHumidity();
   float temperature = dht.readTemperature();
   
-  // Fehlerprüfung der Sensorwerte
+                                              // Fehlerprüfung der Sensorwerte
 
   if (isnan(humidity) || isnan(temperature)) {
     Serial.println("Fehler beim Lesen des DHT-Sensors!");
     return;
   }
   
-  // Sensorwerte auf der seriellen Schnittstelle ausgeben
+                                              // Sensorwerte auf der seriellen Schnittstelle ausgeben
 
   Serial.print("Luftfeuchtigkeit: ");
   Serial.print(humidity);
@@ -130,7 +130,7 @@ void loop() {
   Serial.print(temperature);
   Serial.println("°C");
 
-  // Bewegungssensor prüfen
+                                              // Bewegungssensor prüfen
 
   if (digitalRead(sensorPin) == HIGH) {
     if (timeBewegung == 10) {
@@ -147,38 +147,38 @@ void loop() {
     Serial.println("Keine Bewegung.");
   }
   
-  // Zeitintervall für das Senden der Daten überprüfen
+                                               // Zeitintervall für das Senden der Daten überprüfen
   if (timeSendung == 60) {
 
-    // JSON-String erstellen
+                                               // JSON-String erstellen
     String jsonString = createJson(humidity, temperature, Bewegung);
 
-    // Veröffentlichen der Daten auf dem MQTT-Server
+                                               // Veröffentlichen der Daten auf dem MQTT-Server
     if (client.publish(topic, jsonString.c_str())) {
       Serial.println("Daten erfolgreich gesendet.");
     } else {
       Serial.println("Fehler beim Senden der Daten.");
     }
 
-    timeSendung = 0; // Zeitvariable zurücksetzen
+    timeSendung = 0;                            // Zeitvariable zurücksetzen
   } else {
     timeSendung++;
   }
 }
 
-// Funktion zum Erstellen eines JSON-Strings aus den Sensorwerten
+                                                // Funktion zum Erstellen eines JSON-Strings aus den Sensorwerten
 String createJson(float humidity, float temperature, bool Bewegung) {
 
-  // JSON-Daten füllen
+                                                // JSON-Daten füllen
   jsonData["schule"] = "HWS";
   jsonData["bau"] = "C";
   jsonData["stock"] = "1.OG";
   jsonData["raum"] = "107";
   jsonData["temperatur"] = temperature;
   jsonData["luftfeuchtigkeit"] = humidity;
-  jsonData["anwesenheit"] = Bewegung; // Verfügbarkeit von Personen
+  jsonData["anwesenheit"] = Bewegung;           // Verfügbarkeit von Personen
 
-  // JSON-Dokument serialisieren und als String zurückgeben
+                                                // JSON-Dokument serialisieren und als String zurückgeben
   String jsonString;
   serializeJson(jsonData, jsonString);
   return jsonString;
